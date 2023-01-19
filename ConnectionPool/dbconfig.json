@@ -1,0 +1,11 @@
+{
+    "ip": "127.0.0.1",
+    "port": 3306,
+    "user": "root",
+    "passwd": "Sq17273747@",
+    "db": "server_db",
+    "min_size": 100,
+    "max_size": 1024,
+    "max_idle_time": 5000,
+    "timeout": 1000
+}
