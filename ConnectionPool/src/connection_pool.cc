@@ -14,7 +14,7 @@ ConnectionPool* ConnectionPool::GetInstance() {
  * @brief 构造函数
  *
  */
-ConnectionPool::ConnectionPool() {
+ConnectionPool::ConnectionPool() : stop_(false) {
   ParseJson();
 
   for (int i = 0; i < min_size_; i++) {
@@ -29,12 +29,15 @@ ConnectionPool::ConnectionPool() {
 }
 
 ConnectionPool::~ConnectionPool() {
-  // std::lock_guard<std::mutex> locker(mutex_);
+  std::lock_guard<std::mutex> locker(mutex_);
   while (!connections_.empty()) {
     auto connection = connections_.front();
     connections_.pop();
     delete connection;
   }
+  // 让正处于wait状态的消费者子线程终止
+  stop_ = true;
+  condition_.notify_all();
 }
 
 /**
@@ -100,7 +103,7 @@ void ConnectionPool::ParseJson() {
 void ConnectionPool::ProduceConnection() {
   while (true) {
     std::unique_lock<std::mutex> locker(mutex_);
-    while (connections_.size() >= min_size_) {
+    while (connections_.size() >= min_size_ && !stop_) {
       condition_.wait(locker);
     }
 
@@ -114,16 +117,16 @@ void ConnectionPool::ProduceConnection() {
  *
  */
 void ConnectionPool::DestroyConnection() {
-  while (true) {
+  while (!stop_) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::lock_guard<std::mutex> locker(mutex_);
+
     while (connections_.size() > min_size_) {
       auto connection = connections_.front();
       // 线程池中线程的数量过多是需要清理连接
       // 队列首部元素的空闲时间肯定是最长的, 所以从头部开始清理
-      if (connections_.size() >= max_size_ ||
-          connection->GetAliveTime() >= max_idle_time_) {
+      if (connection->GetAliveTime() >= max_idle_time_) {
         connections_.pop();
         delete connection;
       } else {

@@ -17,7 +17,6 @@ void op1(int begin, int end) {
 void op2(ConnectionPool* pool, int begin, int end) {
   for (int i = begin; i < end; i++) {
     std::shared_ptr<MysqlConnection> conn = pool->GetConnection();
-    conn->Connect("root", "127.0.0.1", "Sq17273747@", "server_db", 3306);
     std::string sql = "insert into user values('zhangsan', '123456')";
     conn->Update(sql);
   }
@@ -44,10 +43,8 @@ void test1() {
   auto interval = end - begin;
   std::cout << "单线程, 使用数据库连接池用时: " << interval.count() << "纳秒, "
             << interval.count() / 1000000 << "毫秒" << std::endl;
-  // 单线程, 使用数据库连接池用时: 7452705810纳秒, 7452毫秒
+  // 单线程, 使用数据库连接池用时: 5822742775纳秒, 5822毫秒
 #endif
 }
 
-int main() {
-    test1();
-}
+int main() { test1(); }

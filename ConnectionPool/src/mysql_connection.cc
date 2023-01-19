@@ -5,7 +5,7 @@
  * @details 使用mysql_init()对连接句柄进行初始化
  */
 MysqlConnection::MysqlConnection()
-    : connection_(nullptr), result_(nullptr), row_(nullptr) {
+    : connection_(nullptr), result_(nullptr), row_(nullptr){
   connection_ = mysql_init(nullptr);
 
   if (!connection_) {
@@ -16,7 +16,9 @@ MysqlConnection::MysqlConnection()
 }
 
 MysqlConnection::~MysqlConnection() {
-  mysql_close(connection_);
+  if (connection_ != nullptr) {
+    mysql_close(connection_);
+  }
   FreeResult();
 }
 
@@ -63,11 +65,11 @@ bool MysqlConnection::Update(const std::string& sql) {
  * @return false
  */
 bool MysqlConnection::Query(const std::string& sql) {
+  FreeResult();
   if (mysql_query(connection_, sql.c_str())) {
     return false;
   }
 
-  FreeResult();
   result_ = mysql_store_result(connection_);
 
   return result_ != nullptr;
@@ -140,6 +142,7 @@ bool MysqlConnection::Rollback() { return mysql_rollback(connection_); }
 void MysqlConnection::FreeResult() {
   if (result_) {
     mysql_free_result(result_);
+    result_ = nullptr;
   }
 }
 

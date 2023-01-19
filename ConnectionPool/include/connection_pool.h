@@ -4,10 +4,10 @@
 #include <chrono>
 #include <condition_variable>
 #include <fstream>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <string>
-#include <memory>
 #include <thread>
 
 #include "mysql_connection.h"
@@ -34,7 +34,6 @@ class ConnectionPool {
 
   void AddConnection();
 
-
  private:
   std::string user_;    // 用户名
   std::string passwd_;  // 密码
@@ -49,5 +48,6 @@ class ConnectionPool {
   std::queue<MysqlConnection*> connections_;
   std::condition_variable condition_;
   std::mutex mutex_;
+  bool stop_;
 };
 #endif
