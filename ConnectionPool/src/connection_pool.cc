@@ -21,8 +21,8 @@ ConnectionPool::ConnectionPool() : stop_(false) {
     AddConnection();
   }
 
-  std::thread producer(&ConnectionPool::ProduceConnection, this);
-  std::thread consumer(&ConnectionPool::DestroyConnection, this);
+  std::thread producer([this] { ProduceConnection(); });
+  std::thread consumer([this] { DestroyConnection(); });
 
   producer.detach();
   consumer.detach();
@@ -53,10 +53,11 @@ std::shared_ptr<MysqlConnection> ConnectionPool::GetConnection() {
   while (connections_.empty()) {
     if (std::cv_status::timeout ==
         condition_.wait_for(locker, std::chrono::milliseconds(timeout_))) {
-      if (connections_.empty()) {
-        // return nullptr;
-        continue;
-      }
+      // if (connections_.empty()) {
+      //   // return nullptr;
+      //   continue;
+      // }
+      continue;
     }
   }
 
@@ -126,7 +127,8 @@ void ConnectionPool::DestroyConnection() {
       auto connection = connections_.front();
       // 线程池中线程的数量过多是需要清理连接
       // 队列首部元素的空闲时间肯定是最长的, 所以从头部开始清理
-      if (connection->GetAliveTime() >= max_idle_time_) {
+      if (connections_.size() > max_size_ ||
+          connection->GetAliveTime() >= max_idle_time_) {
         connections_.pop();
         delete connection;
       } else {
