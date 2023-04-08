@@ -11,6 +11,7 @@ add_executable(water_simulation
                ${PROJECT_SOURCE_DIR}/glad/glad.cc
                ${PROJECT_SOURCE_DIR}/src/camera/camera.cc
                ${PROJECT_SOURCE_DIR}/src/shader/shader.cc
+               ${PROJECT_SOURCE_DIR}/src/callbacks.cc
 )
 
 target_include_directories(water_simulation 

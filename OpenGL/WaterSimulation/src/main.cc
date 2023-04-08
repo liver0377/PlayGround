@@ -1,5 +1,7 @@
 #include "waterSimulation.h"
 
+Simulation::Camera* camera = new Simulation::Camera();
+
 /**
  * @brief 初始化glfw, glad
  *
@@ -32,13 +34,18 @@ GLFWwindow* OpenGLInit() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   // 设置回调函数
-  // glfwSetMouseButtonCallback(window, mouse_button_callback);
-  // glfwSetCursorPosCallback(window, mouse_callback);
-  // glfwSetKeyCallback(window, key_callback);
+  glfwSetMouseButtonCallback(window, mouse_button_callback);
+  glfwSetCursorPosCallback(window, mouse_callback);
+  glfwSetKeyCallback(window, key_callback);
 
   return window;
 }
 
+/**
+ * @brief 加载天空盒的顶点, 纹理
+ * 
+ * @return 顶点VAO, 纹理对象ID 
+ */
 std::tuple<unsigned int, unsigned int> renderSkyBox() {
   // 1. 加载天空图的顶点数据
   unsigned int VAO_cubemap = load_cubemap_points();
@@ -109,9 +116,28 @@ unsigned int load_cubemap_texture(std::vector<std::string>& faces) {
   return textureID;
 }
 
+
+
+void processInput(GLFWwindow *window) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, true);
+    }
+}
+
+/**
+ * @brief 窗口大小变换回调函数
+ * 
+ * @param window 
+ * @param width  
+ * @param height 
+ */
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+}
+
 int main() {
   GLFWwindow* window = OpenGLInit();
-  Simulation::Camera* camera = new Simulation::Camera();
+  
 
   // 1. shader对象创建
   Simulation::Shader shader_cubemap("../shaders/vertex_cubemap.glsl",
