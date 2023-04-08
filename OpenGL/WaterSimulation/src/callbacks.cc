@@ -103,3 +103,14 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         Simulation::Global::mouse_action = 0;
     }
 }
+
+/**
+ * @brief 窗口大小变换回调函数
+ * 
+ * @param window 
+ * @param width  
+ * @param height 
+ */
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+}

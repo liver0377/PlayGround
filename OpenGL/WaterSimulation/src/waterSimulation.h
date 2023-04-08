@@ -16,10 +16,15 @@
 #include "shader/shader.h"
 #include "camera/camera.h"
 
-
-
 GLFWwindow* OpenGLInit();
+std::vector<float>* InitHeightMap(const unsigned char*data, int width, int height, int nChannels, float rec_width);
+std::vector<unsigned int>* InitIndices(int width, int height);
+std::tuple<unsigned int, unsigned int, unsigned int> renderGround();
 std::tuple<unsigned int, unsigned int> renderSkyBox();
-unsigned int load_cubemap_points();
-unsigned int load_cubemap_texture(std::vector<std::string>& faces);
+
+unsigned int LoadObject(std::vector<float>* vertices, std::vector<unsigned int>* indices);
+unsigned int LoadTexture(const char* path);
+unsigned int LoadCubeMapPoints();
+unsigned int LoadCubeMapTexture(std::vector<std::string>& faces);
+
 void processInput(GLFWwindow *window);
