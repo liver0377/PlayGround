@@ -80,9 +80,10 @@ inline float mouse_y = SCR_HEIGHT / 2;
 inline float fov = 45.0f;
 inline unsigned char mouse_action = 0;
 
-inline float opt_speed = 0.8f;
-inline float opt_amount = 0.01f;
-inline float opt_height = 0.5f;
+inline float water_plane_y = -1.0f;        // 水面的初始世界坐标系高度
+inline float opt_speed = 0.8f;            // 海浪的速度
+inline float opt_amount = 0.01f;          // 海浪的数量
+inline float opt_height = 0.5f;           // 海浪的高度
 inline unsigned char opt_mesh = 0;
 
 enum class CameraMovement { FORWARD, BACKWARD, LEFT, RIGHT };
@@ -93,6 +94,7 @@ inline const float PITCH = 0.0f;
 inline const float SPEED = 3.5f;
 inline const float SENSITIVITY = 0.2f;
 inline const float ZOOM = 45.0f;
+
 }  // namespace Global
 
 }  // namespace Simulation

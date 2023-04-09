@@ -1,6 +1,6 @@
 #include "waterSimulation.h"
 
-Simulation::Camera* camera = new Simulation::Camera();
+Simulation::Camera* camera = new Simulation::Camera(glm::vec3(0.0f, 3.0f, 0.0f));
 
 /**
  * @brief 初始化glfw, glad
@@ -29,10 +29,7 @@ GLFWwindow* OpenGLInit() {
     exit(-1);
   }
 
-  // ???
   glEnable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   // 设置回调函数
   glfwSetMouseButtonCallback(window, mouse_button_callback);
@@ -40,6 +37,30 @@ GLFWwindow* OpenGLInit() {
   glfwSetKeyCallback(window, key_callback);
 
   return window;
+}
+
+/**
+ * @brief 加载水面的VAO, VBO, EBO, 纹理
+ * 
+ * @param width  水面的宽度
+ * @param height 水面的高度
+ * @return VAO, 纹理ID, 索引数组大小
+ */
+std::tuple<unsigned int, unsigned int, unsigned int> renderWater(int width, int height) {
+  // 1. 得到水面顶点数组
+  std::vector<float>* vertices_water = InitWaterPlane(width, height, Simulation::Global::water_plane_y);
+
+  // 2. 加载水面纹理
+  unsigned int texture_water = LoadTexture(Simulation::Global::water_texture_path.c_str());
+
+  // 3. 得到水面索引数组
+  std::vector<unsigned int>* indices_water = InitIndices(width, height);
+
+  // 4. 得到水面VAO
+  unsigned int VAO_water = LoadObject(vertices_water, indices_water);
+
+
+  return {VAO_water, texture_water, indices_water->size()};
 }
 
 /**
@@ -61,9 +82,9 @@ std::tuple<unsigned int, unsigned int> renderSkyBox() {
 /**
  * @brief 加载地面的顶点, 纹理
  * 
- * @return VAO, 纹理ID
+ * @return VAO, 纹理ID, 索引数组的大小
  */
-std::tuple<unsigned int, unsigned int, unsigned int> renderGround() {
+std::tuple<unsigned int, unsigned int, unsigned int, unsigned int, unsigned int> renderGround() {
   // 1. 根据高度图得到地面的顶点数组, 索引数组
   int width, height, nChannels;
   unsigned char* data = stbi_load(Simulation::Global::height_map_path.c_str(), &width, &height, &nChannels, 0);
@@ -77,7 +98,7 @@ std::tuple<unsigned int, unsigned int, unsigned int> renderGround() {
   // 3. 加载纹理
   unsigned int texture_ground = LoadTexture(Simulation::Global::ground_texture_path.c_str());
 
-  return {VAO_ground, texture_ground, indices->size()};
+  return {VAO_ground, texture_ground, (unsigned int)indices->size(), (unsigned int)width, (unsigned int)height};
 }
 
 /**
@@ -204,6 +225,7 @@ std::vector<float>* InitHeightMap(const unsigned char*data, int width, int heigh
     float start_x = -(width / 2) * rec_width;
     float start_z = -(height / 2) * rec_width;
 
+    // 从左上角出发, 自下而上, 自左向右地加入所有顶点到vertices数组中
     for (int x = 0; x < width; x++)
     {
         float pos_x = start_x + x * rec_width;    // 该像素点的实际x坐标
@@ -256,6 +278,43 @@ std::vector<unsigned int>* InitIndices(int width, int height) {
   }
 
   return indices;
+}
+
+
+/**
+ * @brief 得到水面顶点数组
+ * 
+ * @param width   水面的宽度
+ * @param height  水面的高度
+ * @param water_plane_y 水面的世界坐标
+ * @return 顶点数组
+ */
+std::vector<float>* InitWaterPlane(int width, int height, int water_plane_y) {
+    auto vertices = new std::vector<float>();
+
+    float start_x = -(width / 2) * Simulation::Global::rec_width;
+    float start_z = -(height / 2) * Simulation::Global::rec_width;
+
+    // 从左上角出发, 自下而上, 自左向右地加入所有顶点到vertices数组中
+    for (int x = 0; x < width; x++)
+    {
+        float pos_x = start_x + x * Simulation::Global::rec_width;    // 该像素点的实际x坐标
+        for (int z = 0; z < height; z++)
+        {
+            float pos_z = start_z + z * Simulation::Global::rec_width;   // 该像素的实际z坐标
+
+            vertices->push_back(pos_x);
+            vertices->push_back(water_plane_y);
+            vertices->push_back(pos_z);
+
+            // Texture coordinates
+            // 可以将整个纹理看成是平铺在地面上
+            vertices->push_back(pos_x);
+            vertices->push_back(pos_z);
+        }
+    }
+
+    return vertices; 
 }
 
 /**
@@ -321,6 +380,29 @@ void drawCubeMap(Simulation::Shader& shader_cubemap, unsigned int VAO_cubemap) {
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
+
+/**
+ * @brief 绘制水面
+ * 
+ * @param shader_water 水面 shader
+ * @param VAO_water    水面 VAO
+ * @param indices_size 水面索引数组
+ */
+void drawWater(Simulation::Shader& shader_water, unsigned int VAO_water, unsigned int indices_size) {
+        shader_water.use();
+        shader_water.updateViewAndPesp(Simulation::Global::fov, Simulation::Global::SCR_WIDTH, Simulation::Global::SCR_HEIGHT, camera->GetViewMatrix(), false);
+
+        shader_water.setFloat("time", glfwGetTime());
+        shader_water.setVec3("cameraPos", camera->Position);
+
+        shader_water.setFloat("speed", Simulation::Global::opt_speed);
+        shader_water.setFloat("amount", Simulation::Global::opt_amount);
+        shader_water.setFloat("height", Simulation::Global::opt_height);
+
+        glBindVertexArray(VAO_water);
+        glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
+}
+
 int main() {
   GLFWwindow* window = OpenGLInit();
   
@@ -330,22 +412,33 @@ int main() {
                                     "../shaders/frag_cubemap.glsl");
   Simulation::Shader shader_ground("../shaders/vertex_ground.glsl",
                                    "../shaders/frag_ground.glsl");
+  Simulation::Shader shader_water("../shaders/vertex_water.glsl",
+                                  "../shaders/frag_water.glsl");
                           
 
   // 2, VAO, VBO, EBO, 纹理的设置
   // skybox
   auto [VAO_cubemap, texture_cubemap] = renderSkyBox();
   // ground
-  auto [VAO_ground, texture_ground, ground_indices_size] = renderGround();
+  auto [VAO_ground, texture_ground, ground_indices_size, width, height] = renderGround();
+  // water
+  auto [VAO_water, texture_water, water_indices_size] = renderWater(width, height);
 
   
   // 解绑
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);   // 默认情况下的polygon_mode被设置为GL_FILL
+                                               // 这样多边形内部的点就会被填充, 这样就可以看到完整的纹理图形
+                                               // 当按下按键'm'之后, polygon mode就会被设置为GL_LINE
+                                               // 此时就只会绘制多边形的边界, 就可以看到类似网格图的效果
   glBindVertexArray(0);
 
   // 2. shader uniform变量设置
   // water, ground, cubmap的纹理单元分别为1
+  shader_water.use();
+  shader_water.setInt("TexWater", 0);
+  shader_water.setInt("skybox", 2);
+
   shader_ground.use();
   shader_ground.setInt("TexGround", 1);
 
@@ -365,6 +458,7 @@ int main() {
     glBindTexture(GL_TEXTURE_CUBE_MAP, texture_cubemap);
 
     // 绘制图形
+    drawWater(shader_water, VAO_water, water_indices_size);
     drawGround(shader_ground, VAO_ground, ground_indices_size);
     drawCubeMap(shader_cubemap, VAO_cubemap);
 

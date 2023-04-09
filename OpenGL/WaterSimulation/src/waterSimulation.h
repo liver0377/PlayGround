@@ -17,9 +17,10 @@
 #include "camera/camera.h"
 
 GLFWwindow* OpenGLInit();
+std::vector<float>* InitWaterPlane(int width, int height, int water_plane_y);
 std::vector<float>* InitHeightMap(const unsigned char*data, int width, int height, int nChannels, float rec_width);
 std::vector<unsigned int>* InitIndices(int width, int height);
-std::tuple<unsigned int, unsigned int, unsigned int> renderGround();
+std::tuple<unsigned int, unsigned int, unsigned int, unsigned int, unsigned int> renderGround();
 std::tuple<unsigned int, unsigned int> renderSkyBox();
 
 unsigned int LoadObject(std::vector<float>* vertices, std::vector<unsigned int>* indices);
