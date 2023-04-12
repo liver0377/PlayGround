@@ -91,9 +91,11 @@ enum class CameraMovement { FORWARD, BACKWARD, LEFT, RIGHT };
 // Default camera values
 inline const float YAW = -90.0f;  // yaw一开始为-90°保证视角指向z轴负向
 inline const float PITCH = 0.0f;
-inline const float SPEED = 3.5f;
+inline const float SPEED = 50.0f;
 inline const float SENSITIVITY = 0.2f;
 inline const float ZOOM = 45.0f;
+
+inline float last_time = 0.0f;
 
 }  // namespace Global
 

@@ -467,6 +467,9 @@ int main() {
 
     glfwSwapBuffers(window);
     glfwPollEvents();
+
+    // 更新delta
+    Simulation::Global::last_time = glfwGetTime();
   }
 
   glfwTerminate();

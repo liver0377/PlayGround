@@ -15,11 +15,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     (void)mods;
     (void)window;
 
-    static float last_time = glfwGetTime();
+    // static float last_time = glfwGetTime();
 
     float curr_time = glfwGetTime();
-    float delta_time = curr_time - last_time;
-    last_time = curr_time;
+    float delta_time = curr_time - Simulation::Global::last_time;
+    Simulation::Global::last_time = curr_time;
 
     if (action == GLFW_PRESS || action == GLFW_REPEAT) {
         // -- Camera
