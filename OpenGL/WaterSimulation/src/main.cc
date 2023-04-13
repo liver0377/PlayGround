@@ -434,7 +434,7 @@ int main() {
   glBindVertexArray(0);
 
   // 2. shader uniform变量设置
-  // water, ground, cubmap的纹理单元分别为1
+  // water, ground, cubmap的纹理单元分别为0, 1, 2
   shader_water.use();
   shader_water.setInt("TexWater", 0);
   shader_water.setInt("skybox", 2);

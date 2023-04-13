@@ -1,3 +1,35 @@
+### 运行环境
+
+- OS: win10
+- 依赖工具: `mingw`, `cmake`(version >= 3.23.1)
+
+
+
+### 运行
+
+在项目根目录打开`shell`
+
+```sh
+mkdir build 
+cd build
+cmake ..
+cmake --build .
+./water_simulation.exe
+```
+
+
+
+### 效果
+
+![image-20230412222837889](./assets/example.png)
+
+- 使用上下左右方向键控制摄像机移动
+- 使用鼠标改变摄像机朝向
+- `Q`: 加大潮汐汹涌程度 `M`: 减小潮汐汹涌程度
+- `A`: 增加波浪数目 `S`: 减小波浪数目
+- `Z`: 增加波浪高度 `X`: 减小波浪高度
+- `M`: 启用网格视图
+
 
 
 ### 海浪模型
